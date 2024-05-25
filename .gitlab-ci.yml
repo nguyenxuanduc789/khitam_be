@@ -1,0 +1,57 @@
+image: node:latest
+cache:
+  paths:
+    - node_modules/
+stages:
+  - build
+  - test
+  - deloy
+variables:
+  GIT_STRATEGY: clone  
+deloy:
+  stage: deloy
+  tags: 
+    - master-api-khachhang
+  script:
+    - echo "$PWD"
+    - cd ~
+    - cd ..
+    - cd ..
+    - ls
+    - cd var/www/html
+    - git fetch origin
+    - echo "Backup source..."
+    - echo "Backup success!"
+    - git checkout main
+    - echo "Pull..."
+    - git reset --hard
+    - git pull origin main
+    - echo "Pull success!"
+    - echo "Done!!"
+  only:
+    - main
+test:
+  stage: test
+  tags: 
+    - dev-api-khachhang
+  script:
+    - who
+    - cd ~
+    - cd ..
+    - cd ..
+    - ls
+    - cd var/www/html
+    - git fetch origin
+    - echo "Backup source..."
+    - echo "Backup success!"
+    - git checkout develop
+    - echo "Pull..."
+    - git reset --hard
+    - git pull origin develop
+    - echo "Pull success!"
+    - echo "Build Success"
+    - echo "Deloy success"
+    - echo "Done!!"
+  only:
+    - develop
+
