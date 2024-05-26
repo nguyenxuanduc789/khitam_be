@@ -1,10 +1,10 @@
-'use strict'
+
 const mongoose = require('mongoose');
 // const { countConnect } = require('../helpers/check.connect');
 
 
 // mongoose.connect(connectString).then(_ => console.log('Connect')).catch(err => console.log('Error  Connect'));
-const { db: { host, name, port, hostname, password } } = require('../configs/config.mongdb')
+// const { db: { host, name, port, hostname, password } } = require('../configs/config.mongdb')
 //const connectString = `mongodb://${hostname}:${password}@${host}:${port}/${name}`;
 const connectString = process.env.URL_CLOUD_MONGO;
 console.log(process.env.URL_CLOUD_MONGO )

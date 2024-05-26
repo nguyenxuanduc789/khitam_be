@@ -22,8 +22,6 @@ const sendConfirmationEmail = async (email,code) => {
            
             
         };
-
-        // Gửi email
         await transporter.sendMail(mailOptions);
         console.log('Email xác nhận đã được gửi thành công.');
     } catch (error) {

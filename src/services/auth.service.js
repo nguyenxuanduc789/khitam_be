@@ -13,7 +13,6 @@ const crypto = require("node:crypto");
 const { validateSignUp } = require("../validation/user.validate");
 const { data_map } = require("../constant/country");
 const { sendConfirmationEmail } = require("../library/Mail/init.mailer");
-
 const { Types } = require("mongoose");
 const code_mailsSchema = require("../models/codemail.model");
 
@@ -92,72 +91,50 @@ class AuthService {
     if (!email || !emailRegex.test(email)) {
       throw new BadRequestError("Vui lòng cung cấp một địa chỉ email hợp lệ");
     }
+  
     const holderUser = await userModel.findOne({ email }).lean();
     if (holderUser) {
       throw new BadRequestError("Tài khoản đã tồn tại");
     }
-    const code = Math.floor(100000 + Math.random() * 900000);
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+  
+    const requestCount = await code_mailsSchema.countDocuments({
+      email: email,
+      createdAt: { $gte: oneHourAgo }
+    });
+    if (requestCount >= 5) {
+      throw new BadRequestError("Bạn đã yêu cầu mã quá nhiều lần. Vui lòng thử lại sau 1 giờ.");
+    }
+    const code = Math.floor(10000 + Math.random() * 90000).toString();
     const newCode = await code_mailsSchema.create({
       email,
-      code,
+      code
     });
     if (!newCode) {
-      throw new BadRequestError("Vui lòng thu lai");
+      throw new BadRequestError("Vui lòng thử lại");
     }
     await sendConfirmationEmail(email, code);
     return {
       is_exists: true,
     };
   };
-  // static sendCodeEmail = [
-  //   sendCodeEmailLimiter,
-  
-  //   async (req, res) => {
-  //     const { email } = req.body;
-  //     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  //     if (!email || !emailRegex.test(email)) {
-  //       throw new BadRequestError("Vui lòng cung cấp một địa chỉ email hợp lệ");
-  //     }
-  //     const holderUser = await userModel.findOne({ email }).lean();
-  //     if (holderUser) {
-  //       throw new BadRequestError("Tài khoản đã tồn tại");
-  //     }
-  //     const code = Math.floor(100000 + Math.random() * 900000);
-  //     const newCode = await code_mailsSchema.create({
-  //       email,
-  //       code,
-  //     });
-  //     if (!newCode) {
-  //       throw new BadRequestError("Vui lòng thu lai");
-  //     }
-  //     await sendConfirmationEmail(email, code);
-  //     res.json({ is_exists: true });
-  //   }
-  // ];
   static verifyEmail = async (body) => {
-    try {
-      const { email, code } = body;
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!email || !emailRegex.test(email)) {
-        throw new BadRequestError("Vui lòng cung cấp một địa chỉ email hợp lệ");
-      }
-      const holderUser = await code_mailsSchema.findOne({ email, code });
-      if (!holderUser) {
-        throw new BadRequestError("Ma code khong hop le");
-      }
-      await sendConfirmationEmail(email);
-      await code_mailsSchema.findOneAndUpdate(
-        { email, code },
-        { is_verify: true }
-      );
-      return {
-        is_verify: true,
-      };
-    } catch (error) {
-      // Xử lý lỗi nếu có
-      console.error("Error in verifying email:", error);
-      throw error; // Re-throw lỗi để xử lý ở các lớp trên
+    const { email, code } = body;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email || !emailRegex.test(email)) {
+      throw new BadRequestError("Vui lòng cung cấp một địa chỉ email hợp lệ");
     }
+    if (!code || typeof code !== 'string' || code.length !== 5) {
+      throw new BadRequestError("Vui lòng cung cấp một mã hợp lệ");
+    }
+    const existingCode = await code_mailsSchema.findOne({ email, code }).lean();
+    if (!existingCode) {
+      throw new BadRequestError("Mã không hợp lệ hoặc đã hết hạn");
+    }
+    await code_mailsSchema.updateOne({ email, code }, { is_verify: true });
+    return {
+      is_verified: true,
+    };
   };
 }
 module.exports = AuthService;
