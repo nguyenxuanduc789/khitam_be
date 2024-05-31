@@ -42,15 +42,15 @@ class AuthService {
   };
 
   static signUp = async (body) => {
-    const { email, password, lastname,firstname } = body;
-    if (!email || !password || !lastname|| !firstname) {
+    const { email, password, lastname, firstname } = body;
+    if (!email || !password || !lastname || !firstname) {
       throw new BadRequestError("Vui lòng cung cấp đủ thông tin bắt buộc");
     }
     const holderUser = await userModel.findOne({ email }).lean();
     if (holderUser) {
       throw new BadRequestError("Tài khoản đã tồn tại");
     }
-    console.log(password)
+    console.log(password);
     const passwordHash = await bcrypt.hash(password, 10);
     const newUser = await userModel.create({
       lastname,
@@ -91,31 +91,33 @@ class AuthService {
     if (!email || !emailRegex.test(email)) {
       throw new BadRequestError("Vui lòng cung cấp một địa chỉ email hợp lệ");
     }
-  
+
     const holderUser = await userModel.findOne({ email }).lean();
     if (holderUser) {
       throw new BadRequestError("Tài khoản đã tồn tại");
     }
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
-  
+
     const requestCount = await code_mailsSchema.countDocuments({
       email: email,
-      createdAt: { $gte: oneHourAgo }
+      createdAt: { $gte: oneHourAgo },
     });
     if (requestCount >= 5) {
-      throw new BadRequestError("Bạn đã yêu cầu mã quá nhiều lần. Vui lòng thử lại sau 1 giờ.");
+      throw new BadRequestError(
+        "Bạn đã yêu cầu mã quá nhiều lần. Vui lòng thử lại sau 1 giờ."
+      );
     }
     const code = Math.floor(10000 + Math.random() * 90000).toString();
     const newCode = await code_mailsSchema.create({
       email,
-      code
+      code,
     });
     if (!newCode) {
       throw new BadRequestError("Vui lòng thử lại");
     }
     await sendConfirmationEmail(email, code);
     return {
-      is_exists: true,
+      email: email,
     };
   };
   static verifyEmail = async (body) => {
@@ -124,7 +126,7 @@ class AuthService {
     if (!email || !emailRegex.test(email)) {
       throw new BadRequestError("Vui lòng cung cấp một địa chỉ email hợp lệ");
     }
-    if (!code || typeof code !== 'string' || code.length !== 5) {
+    if (!code || typeof code !== "string" || code.length !== 5) {
       throw new BadRequestError("Vui lòng cung cấp một mã hợp lệ");
     }
     const existingCode = await code_mailsSchema.findOne({ email, code }).lean();
