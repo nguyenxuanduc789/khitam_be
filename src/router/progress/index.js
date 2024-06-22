@@ -8,4 +8,8 @@ router.post(
   asyncHandler(ProgressController.updateProgress)
 );
 router.get("/progress/get", asyncHandler(ProgressController.getProgress));
+router.post(
+  "/progress/update-progress",
+  asyncHandler(ProgressController.updateProgress)
+);
 module.exports = router;
