@@ -5,7 +5,7 @@ const compression = require("compression");
 const cors = require("cors");
 const helmet = require("helmet");
 const mongoose = require("mongoose");
-
+const path = require("path");
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -22,7 +22,7 @@ require("./dbs/init.mongdb");
 
 // Init routes
 app.use("/", require("./router"));
-
+app.use("/videos", express.static(path.join(__dirname, "uploads/videos")));
 // Handling errors
 app.use((req, res, next) => {
   const error = new Error("Not Found");

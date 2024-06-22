@@ -7,7 +7,12 @@ const userSchema = new Schema(
     lastname: { type: String, required: true },
     firstname: { type: String, required: true },
     password: { type: String, required: true },
-    otpSentAt: { type: Date }
+    otpSentAt: { type: Date },
+    role: {
+      type: String,
+      enum: ["student", "instructor", "admin"],
+      required: true,
+    }, // Thêm role vào schema
   },
   {
     timestamps: true,

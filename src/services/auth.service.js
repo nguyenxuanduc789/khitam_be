@@ -50,13 +50,13 @@ class AuthService {
     if (holderUser) {
       throw new BadRequestError("Tài khoản đã tồn tại");
     }
-    console.log(password);
     const passwordHash = await bcrypt.hash(password, 10);
     const newUser = await userModel.create({
       lastname,
       firstname,
       email,
       password: passwordHash,
+      role: "admin",
     });
 
     // Trả về kết quả thành công nếu tạo người dùng thành công
