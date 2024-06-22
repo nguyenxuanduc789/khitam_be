@@ -1,4 +1,3 @@
-
 const express = require("express");
 const { apiKey, permission } = require("../auth/checkAuth");
 const router = express.Router();
@@ -14,9 +13,8 @@ const router = express.Router();
 // router.use(permission('0000'));
 router.use("/api/v1", require("./user"));
 router.use("/api/v1", require("./auth"));
-// router.get('', (req, res, next) => {
-//     return res.status(200).json({
-//         message: 'Welcome Fantips'
-//     })
-// })
+router.use("/api/v1", require("./courses"));
+router.use("/api/v1", require("./progress"));
+router.use("/api/v1", require("./video"));
+
 module.exports = router;

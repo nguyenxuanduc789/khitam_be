@@ -1,62 +1,104 @@
+const JWT = require("jsonwebtoken");
+const { asyncHandler } = require("../helpers/asyncHandler");
+const { AuthFailureError } = require("../core/error.response");
 
-const JWT = require('jsonwebtoken');
-const { asyncHandler } = require('../helpers/asyncHandler');
-const { AuthFailureError, NotFoundError } = require('../core/error.response');
 const HEADERS = {
-    API_KEY: 'x-api-key',
-    AUTHORIZATION: 'authorization',
-    CLIENT_ID: 'x-client-id',
-    REFRESHTOKEN: 'x-rtoken-id'
-}
+  AUTHORIZATION: "authorization",
+};
+
+const permissions = {
+  admin: {
+    courses: ["create", "update", "delete", "view"],
+    users: ["create", "update", "delete", "view"],
+  },
+  instructor: {
+    courses: ["create", "update", "view"],
+    users: ["view"],
+  },
+  student: {
+    courses: ["view"],
+    users: ["view"],
+  },
+};
+
 const createTokenPair = async (payload, publicKey, privateKey) => {
-    try {
-        const accessToken = await JWT.sign(payload, publicKey, {
-            expiresIn: '2 days',
-        });
-        const refreshToken = await JWT.sign(payload, privateKey, {
-            expiresIn: '7 days'
-        });
-        JWT.verify(accessToken, publicKey, (err, decode) => {
-            if (err) {
-                console.error(`error verify::`, err)
-            } else {
-                console.log(`decode verify::`, decode)
-            }
+  try {
+    const accessToken = await JWT.sign(payload, publicKey, {
+      expiresIn: "2 days",
+    });
+    const refreshToken = await JWT.sign(payload, privateKey, {
+      expiresIn: "7 days",
+    });
 
-        })
-        return { accessToken, refreshToken }
-    } catch (error) {
-        return {
-            code: 'xxx5',
-            message: error.message,
-            status: 'error'
-        }
-    }
-}
+    // Optional: Verify access token
+    JWT.verify(accessToken, publicKey, (err, decode) => {
+      if (err) {
+        console.error(`Error verifying access token:`, err);
+      } else {
+        console.log(`Decoded access token:`, decode);
+      }
+    });
+
+    return { accessToken, refreshToken };
+  } catch (error) {
+    console.error(`Error creating token pair:`, error);
+    return {
+      code: "xxx5",
+      message: error.message,
+      status: "error",
+    };
+  }
+};
+
+const permissionAccess = (role, resource, action) => {
+  return (
+    permissions[role] &&
+    permissions[role][resource] &&
+    permissions[role][resource].includes(action)
+  );
+};
+
 const authenticationV2 = asyncHandler(async (req, res, next) => {
+  const accessToken = req.headers[HEADERS.AUTHORIZATION];
+  if (!accessToken) {
+    throw new AuthFailureError("Authorization header not found");
+  }
 
-    const accessToken = req.headers[HEADERS.AUTHORIZATION]
-    if (!accessToken) throw new AuthFailureError('Not found keyStore')
-    try {
-        const token = accessToken.split(" ");
-        const controller = req._parsedUrl.pathname.split('/')[1]
-        const action = req._parsedUrl.pathname.split('/')[2]
-        const decodeUser = JWT.verify(token[1], process.env.PUBLIC_KEY)
-        if(!permissionAccess(decodeUser.level,controller,action)){
-            throw new AuthFailureError('User Not Permission')
-        }
-        req.user = decodeUser,
-        next();
-    } catch (error) {
-        throw error
+  try {
+    const tokenParts = accessToken.split(" ");
+    if (tokenParts.length !== 2 || tokenParts[0] !== "Bearer") {
+      throw new AuthFailureError("Invalid authorization header format");
     }
-})
 
-const verifyJWT = async (token, keySerect) => {
-    return await JWT.verify(token, keySerect)
-}
+    const token = tokenParts[1];
+    const decodedToken = JWT.verify(token, process.env.PUBLIC_KEY);
+
+    // Kiểm tra và ghi nhật ký vai trò người dùng
+    console.log(`Vai trò người dùng: ${decodedToken.role}`);
+
+    const controller = req._parsedUrl.pathname.split("/")[1];
+    const action = req._parsedUrl.pathname.split("/")[2];
+
+    if (!permissionAccess(decodedToken.role, controller, action)) {
+      throw new AuthFailureError("Người dùng không có quyền truy cập");
+    }
+
+    req.user = decodedToken;
+    next();
+  } catch (error) {
+    // Xử lý các loại lỗi cụ thể ở đây
+    if (error instanceof AuthFailureError) {
+      res
+        .status(401)
+        .json({ status: "error", code: 401, message: error.message });
+    } else {
+      // Xử lý các loại lỗi khác
+      next(error);
+    }
+  }
+});
+
 module.exports = {
-    createTokenPair,
-    authenticationV2,
-    verifyJWT
-}
+  authenticationV2,
+  createTokenPair,
+};

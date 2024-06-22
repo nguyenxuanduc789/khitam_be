@@ -9,7 +9,6 @@ router.post(
   asyncHandler(userController.test_proceduce)
 );
 router.post("/user/test_consume", asyncHandler(userController.test_consume));
-//router.use(authenticationV2)
 router.post("/user/view", asyncHandler(userController.view));
 router.post("/user/create", asyncHandler(userController.create));
 router.post("/user/update", asyncHandler(userController.update));

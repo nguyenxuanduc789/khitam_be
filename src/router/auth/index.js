@@ -15,7 +15,7 @@ router.post("/auth/send_code", asyncHandler(authController.sendCodeEmail));
 router.post("/auth/verify_code", asyncHandler(authController.verifyEmail));
 //authentication
 
-router.use(authenticationV2);
+//router.use(authenticationV2);
 router.post(
   "/auth/handleRefreshToken",
   asyncHandler(authController.refreshToken)
