@@ -12,9 +12,7 @@ class CourseService {
   }
   async getCourseById(courseId, videoData) {
     try {
-      console.log(courseId);
       const course = await Course.findById(courseId).populate("videos").exec();
-      console.log(course); // Log để kiểm tra kết quả tìm thấy
       return course;
     } catch (error) {
       throw error;
@@ -25,7 +23,7 @@ class CourseService {
       const courses = await Course.find({}).populate(
         "instructor",
         "firstname lastname"
-      ); // Populate instructor details
+      );
       return courses;
     } catch (error) {
       throw error;

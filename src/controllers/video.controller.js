@@ -7,12 +7,12 @@ class VideoController {
     try {
       // Lấy thông tin từ file đã upload
       const uploadedVideo = req.file;
-      const { title, description, duration, id_video } = req.body;
+      const { title, description, price, id_video } = req.body;
 
       // Kiểm tra các trường cần thiết trong req.body
-      if (!id_video || !title || !description || !duration) {
+      if (!id_video || !title || !description || !price) {
         throw new Error(
-          "Missing required fields: id_video, title, description, or duration"
+          "Missing required fields: id_video, title, description, or price"
         );
       }
 
@@ -20,7 +20,7 @@ class VideoController {
       const newVideo = await VideoService.createVideo({
         title,
         description,
-        duration,
+        price,
       });
 
       // Đặt tên file MP4 theo _id của video

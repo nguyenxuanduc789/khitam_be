@@ -38,12 +38,13 @@ class CoursesController {
   async viewAll(req, res, next) {
     try {
       const courses = await CourseService.viewAll();
-      new SuccessResponse({
+      res.status(200).json({
         message: "Courses retrieved successfully",
-        metadata: courses,
-      }).send(res);
+        data: courses, // Trả về trực tiếp ở đây
+      });
     } catch (error) {
-      next(error); // Forward error to the error handling middleware
+      console.error("Error in controller viewAll:", error); // Log lỗi
+      next(error);
     }
   }
   async streamVideo(req, res, next) {
