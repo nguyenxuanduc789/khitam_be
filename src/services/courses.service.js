@@ -12,7 +12,10 @@ class CourseService {
   }
   async getCourseById(courseId, videoData) {
     try {
-      const course = await Course.findById(courseId).populate("videos").exec();
+      const course = await Course.findById(courseId)
+        .populate("videos")
+        .populate("instructor")
+        .exec();
       return course;
     } catch (error) {
       throw error;
